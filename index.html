@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b8277" />
+  <title>AquaRescue | SDG 6 Water Monitor</title>
+  <style>
+    :root {
+      --bg: #f3f8f8;
+      --surface: #ffffff;
+      --surface-2: #eaf4f3;
+      --text: #153238;
+      --muted: #668087;
+      --line: #d9e8e7;
+      --primary: #087f75;
+      --primary-2: #10a697;
+      --accent: #b7f0df;
+      --danger: #d94b55;
+      --warning: #e5a23b;
+      --shadow: 0 12px 35px rgba(18, 67, 72, .08);
+    }
+    body.dark {
+      --bg: #101b20;
+      --surface: #17262c;
+      --surface-2: #20343a;
+      --text: #e7f4f2;
+      --muted: #9bb5b8;
+      --line: #2e454b;
+      --primary: #36c6b4;
+      --primary-2: #5ce0cb;
+      --accent: #214f4b;
+      --danger: #ff727a;
+      --warning: #f3bb59;
+      --shadow: 0 12px 35px rgba(0, 0, 0, .18);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      transition: background .2s, color .2s;
+    }
+    button { font: inherit; cursor: pointer; }
+    .app { min-height: 100vh; }
+    .topbar {
+      position: sticky; top: 0; z-index: 5; display: flex; align-items: center;
+      justify-content: space-between; gap: 16px; padding: 14px clamp(16px, 4vw, 48px);
+      background: var(--surface); border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; letter-spacing: -.5px; }
+    .brand-mark { display: grid; place-items: center; width: 42px; height: 42px; color: white; border-radius: 14px; background: linear-gradient(135deg, #087f75, #36c6b4); font-size: 23px; }
+    .brand small { display: block; font-size: 11px; font-weight: 650; letter-spacing: 1.4px; color: var(--muted); text-transform: uppercase; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .pill, .icon-btn, .btn { border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; padding: 9px 13px; }
+    .pill { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 750; }
+    .dot { width: 8px; height: 8px; background: #35b97a; border-radius: 50%; box-shadow: 0 0 0 4px rgba(53,185,122,.12); }
+    .icon-btn { font-size: 18px; width: 42px; height: 42px; padding: 0; }
+    .layout { display: grid; grid-template-columns: 225px minmax(0, 1fr); max-width: 1500px; margin: auto; }
+    aside { min-height: calc(100vh - 71px); padding: 26px 16px; border-right: 1px solid var(--line); }
+    .nav-label { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: 1.5px; padding: 0 12px 10px; }
+    .nav { display: grid; gap: 5px; }
+    .nav button { text-align: left; border: 0; background: transparent; color: var(--muted); padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-weight: 650; }
+    .nav button.active, .nav button:hover { background: var(--surface-2); color: var(--primary); }
+    .nav .nav-icon { width: 22px; text-align: center; font-size: 18px; }
+    .sdg-card { margin-top: 34px; border-radius: 18px; padding: 16px; background: linear-gradient(145deg, #087f75, #075b62); color: white; }
+    .sdg-number { font-size: 11px; font-weight: 800; letter-spacing: 1.4px; opacity: .8; }
+    .sdg-card h3 { font-size: 19px; line-height: 1.2; margin: 10px 0; }
+    .sdg-card p { color: #d1f2ec; font-size: 12px; margin: 0; }
+    main { min-width: 0; padding: clamp(20px, 3vw, 38px); }
+    .welcome { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 26px; }
+    .eyebrow { text-transform: uppercase; letter-spacing: 1.8px; color: var(--primary); font-size: 11px; font-weight: 850; }
+    h1 { margin: 6px 0 7px; font-size: clamp(27px, 3vw, 38px); line-height: 1.12; letter-spacing: -1.2px; }
+    .sub { color: var(--muted); margin: 0; max-width: 650px; }
+    .btn-primary { border: 0; background: var(--primary); color: white; font-weight: 750; padding: 12px 16px; border-radius: 12px; white-space: nowrap; box-shadow: 0 5px 14px rgba(8,127,117,.18); }
+    .btn-primary:hover { filter: brightness(1.06); }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
+    .stat { padding: 18px; min-width: 0; }
+    .stat-top { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .stat-icon { width: 35px; height: 35px; display: grid; place-items: center; border-radius: 11px; background: var(--surface-2); font-size: 18px; }
+    .stat-value { font-size: clamp(22px, 2.4vw, 30px); letter-spacing: -.8px; font-weight: 800; margin: 13px 0 3px; }
+    .stat-note { color: var(--muted); font-size: 11px; }
+    .good { color: var(--primary); font-weight: 750; }
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(270px, .85fr); gap: 18px; align-items: stretch; }
+    .panel { padding: 20px; min-width: 0; }
+    .panel-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 16px; }
+    .panel h2 { margin: 0; font-size: 17px; letter-spacing: -.3px; }
+    .panel-desc { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .tag { display: inline-flex; align-items: center; gap: 6px; border-radius: 100px; background: var(--surface-2); color: var(--primary); font-size: 11px; padding: 6px 9px; font-weight: 800; white-space: nowrap; }
+    .arena { position: relative; overflow: hidden; min-height: 300px; border-radius: 14px; border: 1px solid var(--line); background-color: var(--surface-2); background-image: linear-gradient(rgba(8,127,117,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(8,127,117,.07) 1px, transparent 1px); background-size: 25px 25px; }
+    .arena-label { position: absolute; top: 13px; left: 14px; font-size: 10px; color: var(--muted); font-weight: 850; letter-spacing: 1.4px; }
+    .road { position: absolute; left: 9%; right: 9%; top: 45%; height: 68px; border: 2px dashed #8cbab5; border-radius: 18px; transform: rotate(-8deg); opacity: .75; }
+    .pipe { position: absolute; height: 12px; width: 42%; background: #5b9eaa; border: 2px solid #367f8a; border-radius: 20px; top: 35%; left: 18%; transform: rotate(17deg); }
+    .pipe:after { content: ""; position: absolute; right: 18%; top: 8px; width: 10px; height: 27px; background: #4db9e4; border-radius: 50%; box-shadow: 0 14px 0 -2px #4db9e4; }
+    .tank { position: absolute; top: 12%; right: 11%; width: 57px; height: 66px; border: 3px solid #5b9eaa; border-radius: 10px 10px 16px 16px; background: linear-gradient(to top, rgba(77,185,228,.65) 55%, transparent 55%); }
+    .tank:before { content: "WATER"; position: absolute; top: -18px; width: 100%; font-size: 8px; font-weight: 800; text-align: center; color: var(--muted); }
+    .zone { position: absolute; bottom: 11%; right: 9%; width: 88px; height: 48px; border: 2px dashed var(--primary); color: var(--primary); border-radius: 10px; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: rgba(16,166,151,.08); }
+    .robot { position: absolute; left: 24%; top: 58%; width: 58px; height: 48px; border-radius: 13px; border: 3px solid #075b62; background: linear-gradient(145deg, #35c6b3, #087f75); box-shadow: 0 8px 14px rgba(0,0,0,.17); display: grid; place-items: center; font-size: 24px; transition: left .45s ease, top .45s ease, transform .45s ease; z-index: 2; }
+    .robot:before, .robot:after { content: ""; position: absolute; bottom: -7px; width: 13px; height: 9px; border-radius: 4px; background: #183e44; }
+    .robot:before { left: 3px; } .robot:after { right: 3px; }
+    .leak-marker { position: absolute; left: 48%; top: 31%; display: none; color: var(--danger); font-size: 24px; animation: pulse 1s infinite; }
+    .leak-marker.show { display: block; }
+    @keyframes pulse { 50% { transform: scale(1.25); opacity: .65; } }
+    .arena-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 12px; color: var(--muted); font-size: 11px; }
+    .legend { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+    .legend-dot.red { background: var(--danger); }
+    .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 230px; margin: 18px auto 8px; }
+    .control { min-height: 48px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-2); color: var(--text); font-size: 18px; font-weight: 800; }
+    .control:hover { border-color: var(--primary); color: var(--primary); }
+    .control.stop { background: rgba(217,75,85,.1); color: var(--danger); border-color: rgba(217,75,85,.25); font-size: 12px; }
+    .control.blank { visibility: hidden; }
+    .control-caption { color: var(--muted); text-align: center; font-size: 11px; }
+    .sensor-list { display: grid; gap: 14px; }
+    .sensor-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .sensor-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .sensor-symbol { width: 37px; height: 37px; border-radius: 11px; background: var(--surface-2); display: grid; place-items: center; }
+    .sensor-name strong { display: block; font-size: 12px; }
+    .sensor-name small { color: var(--muted); font-size: 10px; }
+    .sensor-value { font-weight: 800; font-size: 12px; text-align: right; }
+    .sensor-value small { display: block; color: var(--muted); font-weight: 500; font-size: 10px; }
+    .divider { height: 1px; background: var(--line); margin: 15px 0; }
+    .alert-box { padding: 13px; display: flex; gap: 10px; border-radius: 13px; background: var(--surface-2); border: 1px solid var(--line); margin-top: 18px; }
+    .alert-box.warning { background: rgba(217,75,85,.08); border-color: rgba(217,75,85,.28); }
+    .alert-symbol { font-size: 19px; }
+    .alert-box strong { display: block; font-size: 12px; }
+    .alert-box p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+    .lower-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr); gap: 18px; margin-top: 18px; }
+    .event-list { display: grid; gap: 0; }
+    .event { display: flex; align-items: start; gap: 11px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .event:last-child { border-bottom: 0; padding-bottom: 0; }
+    .event-icon { width: 34px; height: 34px; display: grid; place-items: center; background: var(--surface-2); border-radius: 11px; }
+    .event strong { font-size: 12px; display: block; }
+    .event p { font-size: 11px; color: var(--muted); margin: 2px 0 0; }
+    .event time { margin-left: auto; color: var(--muted); font-size: 10px; white-space: nowrap; }
+    .sdg-row { display: flex; gap: 12px; align-items: start; }
+    .sdg-tile { flex: 0 0 65px; height: 65px; background: #26bde2; color: white; padding: 8px; display: flex; flex-direction: column; justify-content: space-between; font-size: 9px; font-weight: 800; line-height: 1.1; }
+    .sdg-tile b { font-size: 27px; line-height: 1; }
+    .sdg-copy p { margin: 5px 0 10px; font-size: 12px; color: var(--muted); }
+    .progress-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; margin-bottom: 6px; }
+    .progress { height: 7px; border-radius: 20px; overflow: hidden; background: var(--surface-2); }
+    .progress span { display: block; height: 100%; width: 68%; background: var(--primary); border-radius: inherit; }
+    footer { text-align: center; color: var(--muted); padding: 28px 10px 10px; font-size: 11px; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 120px); transition: transform .25s; background: var(--text); color: var(--surface); border-radius: 12px; padding: 12px 17px; box-shadow: var(--shadow); z-index: 20; font-size: 13px; max-width: calc(100vw - 30px); }
+    .toast.show { transform: translate(-50%, 0); }
+
+    .arena-item { position:absolute; z-index:1; display:grid; place-items:center; text-align:center; font-size:9px; font-weight:850; color:var(--text); }
+    .house { left:7%; top:13%; width:72px; height:57px; border:2px solid #b98b62; border-radius:8px; background:#f3d7ad; color:#61462c; }
+    .house:before { content:""; position:absolute; top:-19px; left:7px; width:43px; height:43px; background:#d96f59; border:2px solid #b65343; transform:rotate(45deg); z-index:-1; border-radius:4px; }
+    .drain { left:12%; bottom:12%; width:70px; height:25px; border:3px solid #718c93; border-radius:6px; background:repeating-linear-gradient(90deg,#718c93 0 4px,transparent 4px 8px); }
+    .obstacle { left:68%; top:52%; width:35px; height:35px; border-radius:8px; background:#e5a23b; border:2px solid #b67c20; box-shadow:0 4px 0 rgba(0,0,0,.12); font-size:19px; }
+    .base-station { left:5%; bottom:7%; width:58px; height:37px; border:2px solid #087f75; border-radius:9px; background:var(--surface); color:var(--primary); }
+    .sensor-pin { position:absolute; left:49%; top:29%; z-index:1; width:18px; height:18px; border:3px solid #fff; border-radius:50%; background:#d94b55; box-shadow:0 0 0 5px rgba(217,75,85,.18); }
+    .water-drop { position:absolute; left:51%; top:34%; z-index:1; font-size:19px; }
+    .item-label { position:absolute; font-size:8px; letter-spacing:.4px; color:var(--muted); font-weight:850; white-space:nowrap; }
+    .arena-tools { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .arena-tools .btn { font-size:12px; font-weight:750; }
+    .arena-tools .btn-primary { font-size:12px; padding:10px 13px; }
+    .arena-guide { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin-top:15px; }
+    .guide-step { border:1px solid var(--line); background:var(--surface-2); border-radius:12px; padding:11px; }
+    .guide-step b { display:block; font-size:11px; margin-bottom:4px; }
+    .guide-step span { color:var(--muted); font-size:10px; }
+    .equipment-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:12px; }
+    .equipment-item { display:flex; align-items:start; gap:9px; padding:10px; border:1px solid var(--line); border-radius:12px; }
+    .equipment-item input { accent-color:var(--primary); margin-top:4px; }
+    .equipment-item strong { display:block; font-size:11px; }
+    .equipment-item small { display:block; color:var(--muted); font-size:10px; margin-top:2px; }
+    .equipment-progress { margin-top:12px; color:var(--muted); font-size:11px; }
+    .equipment-progress .progress { margin-top:6px; }
+    .route-line { position:absolute; z-index:0; left:18%; top:27%; width:55%; height:51%; border:2px dashed rgba(8,127,117,.55); border-left-color:transparent; border-bottom-color:transparent; border-radius:50%; transform:rotate(22deg); pointer-events:none; }
+    .robot.scanning { animation: robotScan .8s ease-in-out infinite alternate; }
+    @keyframes robotScan { from { filter:brightness(1); } to { filter:brightness(1.4) drop-shadow(0 0 7px #35c6b3); } }
+    @media(max-width:580px) { .arena-guide { grid-template-columns:1fr; } .equipment-grid { grid-template-columns:1fr; } .house { transform:scale(.8); transform-origin:top left; } }
+
+    @media (max-width: 1000px) {
+      .layout { grid-template-columns: 75px minmax(0,1fr); }
+      aside { padding: 22px 10px; }
+      .nav-label, .nav-text, .sdg-card { display: none; }
+      .nav button { justify-content: center; padding: 13px 8px; }
+      .nav .nav-icon { width: auto; }
+      .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .dashboard-grid, .lower-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 580px) {
+      .topbar { padding: 12px 14px; }
+      .brand-mark { width: 38px; height: 38px; }
+      .pill { display: none; }
+      .layout { display: block; }
+      aside { min-height: auto; position: sticky; top: 68px; z-index: 4; padding: 7px 10px; border-right: 0; border-bottom: 1px solid var(--line); background: var(--surface); overflow-x: auto; }
+      .nav { display: flex; justify-content: space-between; min-width: 290px; }
+      .nav button { padding: 8px 12px; }
+      main { padding: 22px 14px; }
+      .welcome { align-items: start; flex-direction: column; }
+      .stats { gap: 9px; }
+      .stat { padding: 13px; }
+      .stat-top { font-size: 10px; }
+      .stat-icon { width: 30px; height: 30px; }
+      .panel { padding: 15px; }
+      .arena { min-height: 270px; }
+      .event time { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">💧</div>
+      <div>AquaRescue <small>SDG 6 · Water Monitor</small></div>
+    </div>
+    <div class="top-actions">
+      <button class="btn" id="connectBtn" style="font-weight:750">🔌 Connect Arduino</button>
+      <div class="pill" id="connectionPill"><span class="dot"></span> DEMO SIMULATION</div>
+      <button class="icon-btn" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">☾</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <div class="nav-label">WORKSPACE</div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active" data-target="dashboard"><span class="nav-icon">▦</span><span class="nav-text">Dashboard</span></button>
+        <button data-target="arena-section"><span class="nav-icon">⌖</span><span class="nav-text">Robot arena</span></button>
+        <button data-target="sensors-section"><span class="nav-icon">◉</span><span class="nav-text">Sensors</span></button>
+        <button data-target="activity-section"><span class="nav-icon">☷</span><span class="nav-text">Activity log</span></button>
+      </nav>
+      <div class="sdg-card">
+        <div class="sdg-number">UNITED NATIONS · SDG 6</div>
+        <h3>Clean water and sanitation for all.</h3>
+        <p>Detect leaks. Reduce waste. Protect our communities.</p>
+      </div>
+    </aside>
+
+    <main id="dashboard">
+      <section class="welcome">
+        <div>
+          <div class="eyebrow">Water intelligence platform</div>
+          <h1>Good day, Water Guardian.</h1>
+          <p class="sub">Monitor your AquaRescue robot, inspect the demo environment, and respond to simulated water leaks.</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn-primary" id="scanBtn">⌕ &nbsp; Scan for leaks</button></div>
+      </section>
+
+      <section class="stats" aria-label="Summary statistics">
+        <article class="card stat">
+          <div class="stat-top"><span>Water saved</span><span class="stat-icon">💧</span></div>
+          <div class="stat-value" id="savedValue">128 <span style="font-size:13px">L</span></div>
+          <div class="stat-note"><span class="good">↑ 12%</span> versus last demo</div>
+        </article>
+        <article class="card stat">
+          <div class="stat-top"><span>Leaks detected</span><span class="stat-icon">⚠️</span></div>
+          <div class="stat-value" id="leakCount">3</div>
+          <div class="stat-note">Across this demo session</div>
+        </article>
+        <article class="card stat">
+          <div class="stat-top"><span>Robot status</span><span class="stat-icon">🤖</span></div>
+          <div class="stat-value" id="robotStatus" style="font-size:23px">Standby</div>
+          <div class="stat-note" id="robotSub">Ready for a scan</div>
+        </article>
+        <article class="card stat">
+          <div class="stat-top"><span>Water quality</span><span class="stat-icon">🧪</span></div>
+          <div class="stat-value" style="font-size:23px" id="qualityValue">Not tested</div>
+          <div class="stat-note">Leak sensor does not test purity</div>
+        </article>
+      </section>
+
+      <div class="dashboard-grid">
+        <section class="card panel" id="arena-section">
+          <div class="panel-head">
+            <div><h2>Robot arena</h2><div class="panel-desc">Miniature community · live simulation</div></div>
+            <span class="tag"><span class="dot"></span><span id="arenaState">Robot idle</span></span>
+          </div>
+          <div class="arena" id="arena">
+            <div class="arena-label">AQUARESCUE TEST ZONE · DEMONSTRATION MODEL</div>
+            <div class="route-line"></div>
+            <div class="road"></div>
+            <div class="house arena-item">🏠<br>COMMUNITY</div>
+            <div class="pipe" title="Water pipeline"></div>
+            <div class="tank" title="Water storage tank"></div>
+            <div class="item-label" style="top:29%;left:21%">WATER PIPE</div>
+            <div class="zone">INSPECTION<br/>POINT</div>
+            <div class="drain arena-item">STORM DRAIN</div>
+            <div class="obstacle arena-item" title="Obstacle">🪨</div>
+            <div class="base-station arena-item">⚡<br>ROBOT BASE</div>
+            <div class="sensor-pin" title="Leak sensor location"></div>
+            <div class="water-drop">💦</div>
+            <div class="leak-marker" id="leakMarker">💦</div>
+            <div class="robot" id="robot" title="AquaRescue robot">🤖</div>
+          </div>
+          <div class="arena-footer">
+            <span class="legend"><i class="legend-dot"></i> Robot position</span>
+            <span class="legend"><i class="legend-dot red"></i> Simulated leak</span>
+            <span id="positionText">Position: Start</span>
+          </div>
+          <div class="controls" aria-label="Robot controls">
+            <button class="control blank" tabindex="-1" aria-hidden="true">·</button>
+            <button class="control" data-move="forward" aria-label="Move forward">↑</button>
+            <button class="control blank" tabindex="-1" aria-hidden="true">·</button>
+            <button class="control" data-move="left" aria-label="Move left">←</button>
+            <button class="control stop" data-move="stop">STOP</button>
+            <button class="control" data-move="right" aria-label="Move right">→</button>
+            <button class="control blank" tabindex="-1" aria-hidden="true">·</button>
+            <button class="control" data-move="backward" aria-label="Move backward">↓</button>
+            <button class="control blank" tabindex="-1" aria-hidden="true">·</button>
+          </div>
+          <div class="control-caption">Manual controls move the on-screen robot only.</div>
+          <div class="arena-tools">
+            <button class="btn-primary" id="guidedDemoBtn">▶ Run guided demo</button>
+            <button class="btn" id="leakDemoBtn">💦 Trigger demo leak</button>
+            <button class="btn" id="obstacleDemoBtn">🪨 Test obstacle</button>
+            <button class="btn" id="returnBaseBtn">⌂ Return to base</button>
+          </div>
+          <div class="arena-guide" aria-label="How the robot works">
+            <div class="guide-step"><b>1 · Patrol</b><span>The robot follows the marked route beside the model water pipe.</span></div>
+            <div class="guide-step"><b>2 · Detect</b><span>The leak sensor checks for moisture; the ultrasonic sensor measures nearby distance.</span></div>
+            <div class="guide-step"><b>3 · Alert</b><span>The dashboard flags a possible leak for a person to inspect.</span></div>
+          </div>
+        </section>
+
+        <section class="card panel" id="sensors-section">
+          <div class="panel-head">
+            <div><h2>Sensor readings</h2><div class="panel-desc" id="sensorMode">Simulated values · connect Arduino for live readings</div></div>
+            <span class="tag">● DEMO</span>
+          </div>
+          <div class="sensor-list">
+            <div class="sensor-row">
+              <div class="sensor-name"><div class="sensor-symbol">💧</div><div><strong>Water leak sensor</strong><small>Moisture detection</small></div></div>
+              <div class="sensor-value" id="waterSensorValue">DRY<small id="waterSensorSub">No leak detected</small></div>
+            </div>
+            <div class="divider"></div>
+            <div class="sensor-row">
+              <div class="sensor-name"><div class="sensor-symbol">📡</div><div><strong>Obstacle distance</strong><small>Ultrasonic sensor</small></div></div>
+              <div class="sensor-value" id="distanceValue">42 cm<small>Path clear</small></div>
+            </div>
+            <div class="divider"></div>
+            <div class="sensor-row">
+              <div class="sensor-name"><div class="sensor-symbol">🔋</div><div><strong>Battery level</strong><small>Estimated demo value</small></div></div>
+              <div class="sensor-value" id="batteryValue">86%<small>Good</small></div>
+            </div>
+          </div>
+          <div class="alert-box" id="alertBox">
+            <div class="alert-symbol" id="alertSymbol">✓</div>
+            <div><strong id="alertTitle">All systems ready</strong><p id="alertText">Start a scan to check the simulated pipeline.</p></div>
+          </div>
+          <button class="btn" id="resetBtn" style="width:100%;margin-top:12px">↻ Reset simulation</button>
+        </section>
+      </div>
+
+      <section class="card panel" id="equipment-section" style="margin-top:18px">
+        <div class="panel-head">
+          <div><h2>Robot arena: build & display checklist</h2><div class="panel-desc">Tick off the items you have prepared for a live school demonstration.</div></div>
+          <span class="tag" id="equipmentTag">0 / 10 ready</span>
+        </div>
+        <div class="equipment-grid" id="equipmentGrid">
+          <label class="equipment-item"><input type="checkbox"><span><strong>Robot chassis and wheels</strong><small>Small rover base, wheels, motor mounts</small></span></label>
+          <label class="equipment-item"><input type="checkbox"><span><strong>Controller and USB cable</strong><small>Arduino Uno/Nano plus data-capable USB cable</small></span></label>
+          <label class="equipment-item"><input type="checkbox"><span><strong>Motor driver and motors</strong><small>For real movement; not included in the current sensor sketch</small></span></label>
+          <label class="equipment-item"><input type="checkbox"><span><strong>Leak/moisture sensor</strong><small>Module mounted near the mock pipeline</small></span></label>
+          <label class="equipment-item"><input type="checkbox"><span><strong>Ultrasonic distance sensor</strong><small>HC-SR04 mounted facing forward</small></span></label>
+          <label class="equipment-item"><input type="checkbox"><span><strong>Power supply and battery holder</strong><small>Correct voltage for controller and motors</small></span></label>
+          <label class="equipment-item"><input type="checkbox"><span><strong>Model water tank and pipe</strong><small>Use dry props or a sealed leak tray</small></span></label>
+          <label class="equipment-item"><input type="checkbox"><span><strong>Obstacle and inspection marker</strong><small>Foam/cardboard rock and clearly marked stop zone</small></span></label>
+          <label class="equipment-item"><input type="checkbox"><span><strong>Arena base and route tape</strong><small>Cardboard/foam board, tape, labels, barriers</small></span></label>
+          <label class="equipment-item"><input type="checkbox"><span><strong>Safety and presentation items</strong><small>Emergency stop, adult supervision, signs and demo script</small></span></label>
+        </div>
+        <div class="equipment-progress"><span id="equipmentText">0 of 10 items prepared</span><div class="progress"><span id="equipmentBar" style="width:0%"></span></div></div>
+        <p class="panel-desc" style="margin-top:12px">Important: this page can demonstrate the idea, but the current Arduino sketch only reads sensors. Real wheel movement requires a motor driver, motors, safe motor power, and matching control code. Keep water away from exposed electronics; never use drinking-water claims from a leak sensor.</p>
+      </section>
+
+      <div class="lower-grid">
+        <section class="card panel" id="activity-section">
+          <div class="panel-head"><div><h2>Recent activity</h2><div class="panel-desc">Events from this demo session</div></div><button class="btn" id="clearLogBtn">Clear</button></div>
+          <div class="event-list" id="eventList" aria-live="polite">
+            <div class="event"><div class="event-icon">🟢</div><div><strong>System initialised</strong><p>AquaRescue simulation is ready.</p></div><time>Now</time></div>
+            <div class="event"><div class="event-icon">💧</div><div><strong>Pipeline monitoring ready</strong><p>Waiting for a scan command.</p></div><time>Now</time></div>
+          </div>
+        </section>
+        <section class="card panel">
+          <div class="panel-head"><div><h2>Our SDG 6 mission</h2><div class="panel-desc">Clean water and sanitation for all</div></div></div>
+          <div class="sdg-row">
+            <div class="sdg-tile"><span>GLOBAL GOAL</span><b>6</b><span>CLEAN WATER</span></div>
+            <div class="sdg-copy"><strong>Every drop counts.</strong><p>AquaRescue demonstrates how robotics can help identify water leaks early, reduce waste, and support better water management.</p></div>
+          </div>
+          <div class="divider"></div>
+          <div class="progress-label"><span>Demo mission checklist</span><strong id="missionPercent">0% complete</strong></div>
+          <div class="progress"><span id="missionProgress" style="width:0%"></span></div>
+          <p class="panel-desc" id="missionText" style="margin-top:10px">Run a scan to begin the mission.</p>
+        </section>
+      </div>
+      <footer>AquaRescue · Student robotics concept · SDG 6: Clean Water and Sanitation<br/>Demo readings are simulated and are not real sensor measurements.</footer>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const robot = $("robot");
+  const arena = $("arena");
+  const toast = $("toast");
+  let x = 24, y = 58, scans = 0, leaks = 3, saved = 128, mission = 0, toastTimer;
+  let serialPort = null, serialReader = null, serialConnected = false, liveData = null, serialBuffer = "";
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+  }
+  function logEvent(icon, title, detail) {
+    const item = document.createElement("div");
+    item.className = "event";
+    const iconEl = document.createElement("div"); iconEl.className = "event-icon"; iconEl.textContent = icon;
+    const body = document.createElement("div");
+    const strong = document.createElement("strong"); strong.textContent = title;
+    const p = document.createElement("p"); p.textContent = detail;
+    body.append(strong, p);
+    const time = document.createElement("time"); time.textContent = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    item.append(iconEl, body, time);
+    $("eventList").prepend(item);
+  }
+  function setPosition() {
+    robot.style.left = x + "%";
+    robot.style.top = y + "%";
+    $("positionText").textContent = `Position: ${Math.round(x)}, ${Math.round(y)}`;
+  }
+  function setStatus(status, sub) {
+    $("robotStatus").textContent = status;
+    $("robotSub").textContent = sub;
+    $("arenaState").textContent = status;
+  }
+  function move(direction) {
+    const step = 7;
+    if (direction === "forward") y = Math.max(12, y - step);
+    if (direction === "backward") y = Math.min(78, y + step);
+    if (direction === "left") x = Math.max(5, x - step);
+    if (direction === "right") x = Math.min(84, x + step);
+    if (direction === "stop") { setStatus("Stopped", "Manual stop selected"); showToast("Robot simulation stopped."); logEvent("⏹️", "Robot stopped", "Manual stop command selected."); return; }
+    setPosition();
+    setStatus("Manual", "Manual simulation control");
+    logEvent("🤖", "Robot moved", `Manual ${direction} command simulated.`);
+  }
+  document.querySelectorAll("[data-move]").forEach(btn => btn.addEventListener("click", () => move(btn.dataset.move)));
+
+  function scan() {
+    scans++;
+    if (serialConnected && liveData) {
+      applyLiveReading(liveData, true);
+      mission = Math.min(100, mission + 25);
+      updateMission();
+      logEvent("📡", "Live sensor scan", liveData.leak ? "Arduino reports moisture/leak detected." : "Arduino reports no leak at the sensor.");
+      showToast(liveData.leak ? "Arduino reports a possible leak." : "Live scan complete: no leak reported.");
+      return;
+    }
+    setStatus("Scanning", "Checking simulated pipeline");
+    $("waterSensorValue").textContent = "CHECKING";
+    $("waterSensorSub").textContent = "Scanning demo pipeline...";
+    $("alertBox").classList.remove("warning");
+    $("alertSymbol").textContent = "⌕";
+    $("alertTitle").textContent = "Pipeline scan in progress";
+    $("alertText").textContent = "This is a simulation. Connect an Arduino for real sensor readings.";
+    showToast("Running a demo scan. Connect Arduino for live data.");
+    logEvent("🔎", "Demo scan started", "No Arduino data is connected.");
+    x = 43; y = 37; setPosition();
+    $("scanBtn").disabled = true;
+    $("scanBtn").textContent = "Scanning…";
+    setTimeout(() => {
+      const foundLeak = Math.random() < 0.72;
+      $("scanBtn").disabled = false;
+      $("scanBtn").textContent = "⌕  Scan for leaks";
+      $("distanceValue").innerHTML = (12 + Math.floor(Math.random()*45)) + " cm<small>Demo value</small>";
+      $("batteryValue").innerHTML = Math.max(25, 86 - scans*2) + "%<small>Demo estimate</small>";
+      mission = Math.min(100, mission + 25); updateMission();
+      if (foundLeak) {
+        leaks++; saved += 5;
+        $("leakCount").textContent = leaks;
+        $("savedValue").innerHTML = saved + ' <span style="font-size:13px">L</span>';
+        $("waterSensorValue").textContent = "WET";
+        $("waterSensorSub").textContent = "Simulated leak found";
+        $("leakMarker").classList.add("show");
+        $("alertBox").classList.add("warning");
+        $("alertSymbol").textContent = "⚠️";
+        $("alertTitle").textContent = "Simulated leak detected";
+        $("alertText").textContent = "This result is randomly generated demo data, not a real measurement.";
+        setStatus("Demo alert", "Simulated leak");
+        logEvent("💦", "Demo leak generated", "Simulated warning; no physical leak was measured.");
+      } else {
+        $("waterSensorValue").textContent = "DRY";
+        $("waterSensorSub").textContent = "No simulated leak found";
+        $("leakMarker").classList.remove("show");
+        $("alertBox").classList.remove("warning");
+        $("alertSymbol").textContent = "✓";
+        $("alertTitle").textContent = "Demo scan clear";
+        $("alertText").textContent = "This is a simulated result, not a real sensor measurement.";
+        setStatus("Standby", "Demo scan completed");
+        logEvent("✅", "Demo scan completed", "No leak generated in this simulated scan.");
+      }
+      x = 48; y = 48; setPosition();
+    }, 1000);
+  }
+
+
+  let demoTimer = null;
+  function showDemoLeak() {
+    $("leakMarker").classList.add("show");
+    $("waterSensorValue").textContent = "WET";
+    $("waterSensorSub").textContent = serialConnected ? "Check live sensor reading" : "Manually triggered demo";
+    $("alertBox").classList.add("warning");
+    $("alertSymbol").textContent = "⚠️";
+    $("alertTitle").textContent = "Possible leak demonstration";
+    $("alertText").textContent = serialConnected ? "Visual demo marker shown; use live sensor values for actual detection." : "This is a manually triggered visual example, not a real leak reading.";
+    setStatus("Leak demo", "Demonstration alert");
+    logEvent("💦", "Leak demonstration triggered", "Visual alert shown to explain how AquaRescue reports a possible leak.");
+    showToast("Leak alert example displayed.");
+  }
+  function returnToBase() {
+    clearInterval(demoTimer); demoTimer = null;
+    robot.classList.remove("scanning");
+    x = 13; y = 68; setPosition();
+    setStatus("At base", "Robot returned to its charging/start point");
+    logEvent("⌂", "Robot returned to base", "End of demonstration route.");
+    showToast("Robot returned to base (screen simulation).");
+  }
+  $("leakDemoBtn").addEventListener("click", showDemoLeak);
+  $("obstacleDemoBtn").addEventListener("click", () => {
+    clearInterval(demoTimer); demoTimer = null;
+    x = 62; y = 48; setPosition();
+    robot.classList.add("scanning");
+    setStatus("Obstacle detected", "Stop and inspect route");
+    $("alertBox").classList.add("warning");
+    $("alertSymbol").textContent = "🪨";
+    $("alertTitle").textContent = "Obstacle demo";
+    $("alertText").textContent = "The ultrasonic sensor measures distance. The current sensor-only sketch does not autonomously brake or steer motors.";
+    logEvent("🪨", "Obstacle test demo", "Robot positioned by the obstacle; no physical motors are being controlled.");
+    showToast("Obstacle scenario shown on the arena.");
+  });
+  $("returnBaseBtn").addEventListener("click", returnToBase);
+  $("guidedDemoBtn").addEventListener("click", () => {
+    clearInterval(demoTimer);
+    const btn = $("guidedDemoBtn");
+    btn.disabled = true; btn.textContent = "Demo running…";
+    robot.classList.add("scanning");
+    const steps = [
+      {x:24,y:58,title:"Step 1: Patrol",sub:"Following the model pipe",detail:"The robot begins its patrol route."},
+      {x:42,y:39,title:"Step 2: Inspect pipe",sub:"Checking for moisture",detail:"The leak sensor is positioned near the pipeline."},
+      {x:62,y:48,title:"Step 3: Check obstacle",sub:"Measuring distance",detail:"The ultrasonic sensor measures distance ahead."},
+      {x:77,y:65,title:"Step 4: Report",sub:"Showing inspection point",detail:"The dashboard displays sensor status and an alert if needed."}
+    ];
+    let i=0;
+    function nextStep() {
+      const step=steps[i];
+      x=step.x; y=step.y; setPosition(); setStatus(step.title,step.sub);
+      logEvent("🤖",step.title,step.detail);
+      i++;
+      if(i<steps.length) demoTimer=setTimeout(nextStep,1300);
+      else {
+        demoTimer=setTimeout(()=> {
+          robot.classList.remove("scanning");
+          btn.disabled=false; btn.textContent="▶ Run guided demo";
+          setStatus("Demo complete","Ready to explain the sensors");
+          showToast("Guided arena demo complete.");
+        },1300);
+      }
+    }
+    nextStep();
+  });
+  document.querySelectorAll("#equipmentGrid input").forEach(input => input.addEventListener("change", () => {
+    const total=document.querySelectorAll("#equipmentGrid input").length;
+    const checked=document.querySelectorAll("#equipmentGrid input:checked").length;
+    $("equipmentTag").textContent = `${checked} / ${total} ready`;
+    $("equipmentText").textContent = `${checked} of ${total} items prepared`;
+    $("equipmentBar").style.width = `${checked/total*100}%`;
+  }));
+
+  function updateMission() {
+    $("missionPercent").textContent = mission + "% complete";
+    $("missionProgress").style.width = mission + "%";
+    $("missionText").textContent = mission === 100 ? "Demo checklist complete! Reset to run it again." : "Scan complete. Continue testing to complete the demo checklist.";
+  }
+
+  function applyLiveReading(data, fromScan = false) {
+    liveData = data;
+    $("waterSensorValue").textContent = data.leak ? "WET" : "DRY";
+    $("waterSensorSub").textContent = data.leak ? "Arduino: moisture detected" : "Arduino: no moisture detected";
+    if (Number.isFinite(data.distance_cm)) {
+      $("distanceValue").innerHTML = data.distance_cm + " cm<small>Live ultrasonic reading</small>";
+    }
+    $("batteryValue").innerHTML = "—<small>Not wired to Arduino</small>";
+    $("qualityValue").textContent = "Not tested";
+    $("leakMarker").classList.toggle("show", Boolean(data.leak));
+    $("alertBox").classList.toggle("warning", Boolean(data.leak));
+    $("alertSymbol").textContent = data.leak ? "⚠️" : "✓";
+    $("alertTitle").textContent = data.leak ? "Moisture detected by Arduino" : "No moisture detected";
+    $("alertText").textContent = data.leak ? "Check the sensor and inspect the area for a possible leak." : "The connected leak sensor is not detecting moisture.";
+    if (data.leak) setStatus("Leak alert", "Live Arduino reading");
+    else setStatus("Connected", "Live Arduino readings received");
+    if (fromScan && data.leak) {
+      leaks++; $("leakCount").textContent = leaks;
+    }
+  }
+
+  async function connectArduino() {
+    if (!('serial' in navigator)) {
+      showToast("Web Serial is unavailable. Use Chrome or Edge on localhost/HTTPS.");
+      return;
+    }
+    try {
+      if (serialConnected) {
+        if (serialReader) { try { await serialReader.cancel(); } catch (_) {} }
+        if (serialPort) { try { await serialPort.close(); } catch (_) {} }
+        serialPort = null; serialReader = null; serialConnected = false; liveData = null;
+        $("connectBtn").textContent = "🔌 Connect Arduino";
+        $("connectionPill").innerHTML = '<span class="dot"></span> DEMO SIMULATION';
+        $("sensorMode").textContent = "Simulated values · connect Arduino for live readings";
+        showToast("Arduino disconnected. Demo mode is active.");
+        logEvent("🔌", "Arduino disconnected", "Returned to demo mode.");
+        return;
+      }
+      serialPort = await navigator.serial.requestPort();
+      await serialPort.open({ baudRate: 9600 });
+      serialConnected = true;
+      $("connectBtn").textContent = "Disconnect Arduino";
+      $("connectionPill").innerHTML = '<span class="dot"></span> ARDUINO CONNECTED';
+      $("sensorMode").textContent = "Live readings from Arduino over USB";
+      showToast("Arduino connected. Waiting for sensor data...");
+      logEvent("🔌", "Arduino connected", "USB serial connection opened at 9600 baud.");
+      readSerialLoop();
+    } catch (err) {
+      serialConnected = false;
+      showToast("Connection failed: " + (err.message || "check USB cable and port"));
+    }
+  }
+
+  async function readSerialLoop() {
+    const decoder = new TextDecoder();
+    try {
+      while (serialPort && serialPort.readable && serialConnected) {
+        serialReader = serialPort.readable.getReader();
+        try {
+          while (serialConnected) {
+            const { value, done } = await serialReader.read();
+            if (done) break;
+            serialBuffer += decoder.decode(value, { stream: true });
+            let newline;
+            while ((newline = serialBuffer.indexOf("\n")) >= 0) {
+              const line = serialBuffer.slice(0, newline).trim();
+              serialBuffer = serialBuffer.slice(newline + 1);
+              if (!line) continue;
+              try {
+                const data = JSON.parse(line);
+                if (typeof data.leak === "boolean") applyLiveReading(data);
+              } catch (_) { /* Ignore incomplete or non-JSON serial lines. */ }
+            }
+          }
+        } finally {
+          serialReader.releaseLock();
+          serialReader = null;
+        }
+      }
+    } catch (err) {
+      if (serialConnected) showToast("Serial read stopped: " + err.message);
+    }
+  }
+  $("connectBtn").addEventListener("click", connectArduino);
+  $("scanBtn").addEventListener("click", scan);
+
+  $("resetBtn").addEventListener("click", () => {
+    x = 24; y = 58; scans = 0; mission = 0; saved = 128; leaks = 3;
+    setPosition(); setStatus("Standby", "Ready for a scan");
+    $("savedValue").innerHTML = '128 <span style="font-size:13px">L</span>';
+    $("leakCount").textContent = "3";
+    $("waterSensorValue").textContent = "DRY";
+    $("waterSensorSub").textContent = "No leak detected";
+    $("distanceValue").innerHTML = '42 cm<small>Path clear</small>';
+    $("batteryValue").innerHTML = '86%<small>Good</small>';
+    $("leakMarker").classList.remove("show");
+    $("alertBox").classList.remove("warning");
+    $("alertSymbol").textContent = "✓";
+    $("alertTitle").textContent = "All systems ready";
+    $("alertText").textContent = "Start a scan to check the simulated pipeline.";
+    $("missionPercent").textContent = "0% complete";
+    $("missionProgress").style.width = "0%";
+    $("missionText").textContent = "Run a scan to begin the mission.";
+    $("eventList").replaceChildren();
+    logEvent("↻", "Simulation reset", "All demo values returned to their starting state.");
+    showToast("Simulation has been reset.");
+  });
+  $("clearLogBtn").addEventListener("click", () => {
+    $("eventList").replaceChildren();
+    logEvent("🧹", "Activity cleared", "The activity log was cleared.");
+  });
+  $("themeToggle").addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    const dark = document.body.classList.contains("dark");
+    $("themeToggle").textContent = dark ? "☀" : "☾";
+    $("themeToggle").setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+    localStorage.setItem("aquarescue-theme", dark ? "dark" : "light");
+  });
+  if (localStorage.getItem("aquarescue-theme") === "dark") {
+    document.body.classList.add("dark");
+    $("themeToggle").textContent = "☀";
+  }
+  document.querySelectorAll("[data-target]").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll("[data-target]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    $(btn.dataset.target).scrollIntoView({behavior:"smooth", block:"start"});
+  }));
+</script>
+</body>
+</html>
